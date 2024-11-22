@@ -117,7 +117,6 @@ def jogar_rodadas(jogadores_cartas, primeiro_jogador, cartas_ganhas_por_jogador,
 
         # Após todos jogarem, determinar o vencedor da rodada
         vencedor = determinar_vencedor_rodada(cartas_jogadas, primeiro_jogador)
-        print(f"\nJogador {vencedor + 1} venceu a rodada com a carta: {cartas_jogadas[vencedor]}")
 
         # Atualizar cartas ganhas e pontos
         cartas_ganhas_por_jogador[vencedor].extend(cartas_jogadas)
@@ -128,26 +127,35 @@ def jogar_rodadas(jogadores_cartas, primeiro_jogador, cartas_ganhas_por_jogador,
         # Exibir o estado atual
         print("\nEstado atual:")
         for jogador in range(len(cartas_ganhas_por_jogador)):
-            print(f"Jogador {jogador + 1}: Cartas ganhas: {cartas_ganhas_por_jogador[jogador]} = {len(cartas_ganhas_por_jogador[jogador])} pontos")
+            # Filtrar cartas de copas (♥)
+            cartas_ganhas = cartas_ganhas_por_jogador[jogador]
+            cartas_copas = [carta for carta in cartas_ganhas if '♥' in carta or carta == 'Q♠']
+
+            # Usar calcular_pontos para obter a pontuação correta
+            pontos_atual = calcular_pontos(cartas_ganhas)
+
+            print(f"Jogador {jogador + 1}: Cartas ganhas: {cartas_ganhas}, {cartas_copas} = {pontos_atual} pontos")
 
 
 # =========================================================
 #                   Finalizar Rodada
 # =========================================================
 
-def determinar_vencedor_rodada (cartas_jogadas, primeiro_jogador):
-
-    naipe_lider = cartas_jogadas [0][-1] # Naipe da primeira carta jogada
-    maior_carta = cartas_jogadas [0]
+def determinar_vencedor_rodada(cartas_jogadas, primeiro_jogador):
+    print(f"Cartas jogadas: {cartas_jogadas}")
+    naipe_lider = cartas_jogadas[0][-1]  # O naipe da primeira carta jogada
+    maior_carta = cartas_jogadas[0]
     vencedor = primeiro_jogador
 
-    for i, carta in enumerate (cartas_jogadas):
-        if carta [-1] == naipe_lider: # Verifica se segue o naipe lider
-
-            if valor_carta(carta) > valor_carta(maior_carta):
+    for i, carta in enumerate(cartas_jogadas):
+        print(f"Analisando carta: {carta}")
+        if carta[-1] == naipe_lider:  # Apenas considera cartas do naipe líder
+            if valor_carta(carta) > valor_carta(maior_carta):  # Compara os valores das cartas
                 maior_carta = carta
-                vencedor = (primeiro_jogador + 1) % len (cartas_jogadas)
-    #for
+                vencedor = (primeiro_jogador + i) % len(cartas_jogadas)  # Determina o índice do vencedor
+                print(f"Nova maior carta: {maior_carta} por Jogador {vencedor + 1}")
+
+    print(f"Vencedor determinado: Jogador {vencedor + 1} com a carta {maior_carta}")
     return vencedor
 #determinar_vencedor_rodada
 
@@ -181,7 +189,7 @@ def finalizar_rodada(cartas_jogadas, primeiro_jogador, cartas_ganhas_por_jogador
     Finaliza a rodada:
     - Determina o vencedor.
     - Atribui as cartas jogadas ao vencedor.
-    - Atualiza as cartas ♥ ganhas e calcula pontos.
+    - Calcula os pontos apenas das cartas ♥ e da Q♠.
     """
     # Determina o vencedor da rodada
     vencedor = determinar_vencedor_rodada(cartas_jogadas, primeiro_jogador)
@@ -189,16 +197,10 @@ def finalizar_rodada(cartas_jogadas, primeiro_jogador, cartas_ganhas_por_jogador
     # Adiciona as cartas jogadas ao vencedor
     cartas_ganhas_por_jogador[vencedor].extend(cartas_jogadas)
 
-    # Atualiza as cartas de ♥ apenas
-    cartas_coracoes_por_jogador = {
-        jogador: [carta for carta in cartas if carta[-1] == '♥']
-        for jogador, cartas in cartas_ganhas_por_jogador.items()
-    }
-
-    # Calcula os pontos de cada jogador
+    # Calcula os pontos para cada jogador com base nas cartas ganhas
     pontos_por_jogador = {
         jogador: calcular_pontos(cartas)
-        for jogador, cartas in cartas_ganhas_por_jogador.items()
+        for jogador, cartas in enumerate(cartas_ganhas_por_jogador)
     }
 
-    return vencedor, cartas_ganhas_por_jogador, cartas_coracoes_por_jogador, pontos_por_jogador
+    return vencedor, cartas_ganhas_por_jogador, pontos_por_jogador
