@@ -54,12 +54,25 @@ def naipe_correto (carta_lider, mao_jogador):
     return any(carta.endswith(naipe_lider) for carta in mao_jogador) #disponibiliza qualquer carta do mesmo naipe
 #naipe_correto
 
-def validar_jogada (carta, mao_jogador, carta_lider):
-    if not naipe_correto (carta_lider, mao_jogador):
-        # Se não puder seguir o naipe, qualquer carta é válida (menos na primeira jogada)
-        return True
-    # Se puder seguir o naipe, verifica se a carta corresponde
-    return carta.endswith(carta_lider[-1])
+def validar_jogada(carta, mao_jogador, carta_lider, rodada):
+    if rodada == 0:  # Primeira rodada não permite jogar copas
+        if carta[-1] == '♥':
+            print("Você não pode jogar Copas na primeira rodada!")
+            return False
+
+    if carta_lider is None:  # Primeira jogada da rodada
+        if carta[-1] == '♥':  # Não pode iniciar a rodada com Copas
+            print("Você não pode iniciar a rodada com Copas!")
+            return False
+    else:  # Jogadas subsequentes
+        naipe_lider = carta_lider[-1]
+        possui_naipe_lider = any(c.endswith(naipe_lider) for c in mao_jogador)
+
+        if possui_naipe_lider and not carta.endswith(naipe_lider):
+            print("Jogada inválida! Você deve jogar uma carta do mesmo naipe que a carta líder, se possível.")
+            return False
+
+    return True
 #validar_jogada
 
 def iniciar_rodada (jogadores_cartas):
@@ -70,6 +83,8 @@ def iniciar_rodada (jogadores_cartas):
 
 def jogar_rodadas(jogadores_cartas, primeiro_jogador, cartas_ganhas_por_jogador, pontos_por_jogador):
     total_cartas = len(jogadores_cartas[0])  # Número de rodadas igual ao número de cartas por jogador
+
+    copas_jogadas = False  # Flag para saber se Copas já foi jogado
 
     for rodada in range(total_cartas):
         cartas_jogadas = []  # Lista para armazenar as cartas jogadas na rodada
@@ -98,8 +113,7 @@ def jogar_rodadas(jogadores_cartas, primeiro_jogador, cartas_ganhas_por_jogador,
                         print("Carta inválida! Escolha uma carta que esteja na sua mão.")
                         continue
                     
-                    if carta_lider and not validar_jogada(carta_jogada, mao_jogador, carta_lider):
-                        print("Jogada inválida! Deve seguir o naipe, se possível.")
+                    if not validar_jogada(carta_jogada, mao_jogador, carta_lider, rodada):
                         continue
                     
                     # Se a carta for válida, remove-a e avança
@@ -109,7 +123,9 @@ def jogar_rodadas(jogadores_cartas, primeiro_jogador, cartas_ganhas_por_jogador,
                     # Define a carta líder se ainda não houver uma
                     if not carta_lider:
                         carta_lider = carta_jogada
-                    
+                    if carta_jogada[-1] == '♥':
+                        copas_jogadas = True  # Alguém jogou Copas, portanto, agora é válido seguir o naipe
+
                     break  # Sai do loop quando a carta é válida
             
             # Próximo jogador
@@ -135,6 +151,7 @@ def jogar_rodadas(jogadores_cartas, primeiro_jogador, cartas_ganhas_por_jogador,
             pontos_atual = calcular_pontos(cartas_ganhas)
 
             print(f"Jogador {jogador + 1}: Cartas ganhas: {cartas_ganhas}, {cartas_copas} = {pontos_atual} pontos")
+#jogar_rodadas
 
 
 # =========================================================
