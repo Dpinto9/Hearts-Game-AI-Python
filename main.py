@@ -18,59 +18,64 @@ def mostrar_mesa(jogadores_cartas, cartas_ganhas_por_jogador, pontos_por_jogador
     """
     limpar_terminal()
     print("\n--- Mesa de Jogo ---")
-    print(" Jogador 1 | Jogador 2 | Jogador 3 | Jogador 4")
-    print("----------------------------------------------")
     for i, cartas in enumerate(jogadores_cartas, start=1):
         print(f"Jogador {i}: {cartas}")
     
     print("\n--- Mesa de Pontos ---")
-    print(" Jogador 1 | Jogador 2 | Jogador 3 | Jogador 4")
-    print("----------------------------------------------")
-    print(f"   {pontos_por_jogador[0]} | {pontos_por_jogador[1]} | {pontos_por_jogador[2]} | {pontos_por_jogador[3]}")
+    for i, pontos in enumerate(pontos_por_jogador, start=1):
+        print(f"Jogador {i}: {pontos} pontos")
     
     print("\n--- Estado Atual ---")
     for i, cartas_ganhas in enumerate(cartas_ganhas_por_jogador, start=1):
-        print(f"Jogador {i}: Cartas ganhas: {cartas_ganhas} = {len(cartas_ganhas)} pontos")
+        print(f"Jogador {i}: Cartas ganhas: {cartas_ganhas} ({len(cartas_ganhas)} cartas)")
 
 def iniciar_jogo():
+    """
+    Função principal para iniciar o jogo, configurando o baralho e o estado inicial.
+    """
     print("Bem-vindo ao Jogo de Copas!")
-
+    
+    # Preparar baralho e distribuir cartas
     embaralhado = embaralhar_baralho(BARALHO)
     distribuicao = distribuir_cartas(embaralhado)
-
     jogadores_cartas = [organizar_cartas(jogador) for jogador in distribuicao]
 
     # Inicializar estado do jogo
     cartas_ganhas_por_jogador = [[] for _ in range(4)]
     pontos_por_jogador = [0, 0, 0, 0]
 
-    # Inicializar rodada
+    # Determinar quem começa a rodada
     primeiro_jogador = iniciar_rodada(jogadores_cartas)
-    print(f"Jogador {primeiro_jogador + 1} começa a rodada.")
+    print(f"Jogador {primeiro_jogador + 1} começa a rodada com o 2♣.\n")
 
+    # Jogar rodadas
     jogar_rodadas(jogadores_cartas, primeiro_jogador, cartas_ganhas_por_jogador, pontos_por_jogador)
 
+    # Exibir estado final da mesa
     mostrar_mesa(jogadores_cartas, cartas_ganhas_por_jogador, pontos_por_jogador)
-    print("Jogo finalizado!")
+    print("\nJogo finalizado! Obrigado por jogar.")
 
 def landing_page():
     """
-    Exibe o menu inicial onde o jogador escolhe iniciar o jogo ou sair.
+    Página inicial para navegar entre começar o jogo e sair.
     """
     while True:
-        print("\nEscolha uma opção:")
+        limpar_terminal()
+        print("=== Bem-vindo ao Jogo de Copas ===")
+        print("Escolha uma opção:")
         print("1 - Começar Jogo")
         print("2 - Sair")
-        opcao = input("Digite o número da opção: ")
+        opcao = input("Digite o número da opção: ").strip()
 
         if opcao == "1":
             iniciar_jogo()
-            break
+            input("\nPressione Enter para voltar ao menu principal...")
         elif opcao == "2":
-            print("Saindo do jogo...")
+            print("\nSaindo do jogo. Até a próxima!")
             break
         else:
-            print("Opção inválida. Tente novamente.")
+            print("\nOpção inválida. Tente novamente.")
 
 # Executa a página inicial
-landing_page()
+if __name__ == "__main__":
+    landing_page()

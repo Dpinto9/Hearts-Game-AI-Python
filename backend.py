@@ -54,22 +54,20 @@ def naipe_correto (carta_lider, mao_jogador):
     return any(carta.endswith(naipe_lider) for carta in mao_jogador) #disponibiliza qualquer carta do mesmo naipe
 #naipe_correto
 
-def validar_jogada(carta, mao_jogador, carta_lider, rodada):
-    if rodada == 0:  # Primeira rodada não permite jogar copas
+def validar_jogada(carta, mao_jogador, carta_lider, rodada, copas_jogadas):
+    if rodada == 0:  # Primeira rodada não permite jogar Copas
         if carta[-1] == '♥':
             print("Você não pode jogar Copas na primeira rodada!")
             return False
-
-    if carta_lider is None:  # Primeira jogada da rodada
-        if carta[-1] == '♥':  # Não pode iniciar a rodada com Copas
+    elif carta_lider is None:  # Primeira jogada da rodada
+        if carta[-1] == '♥' and not copas_jogadas:  # Não pode iniciar com Copas, exceto se já foi jogado
             print("Você não pode iniciar a rodada com Copas!")
             return False
-    else:  # Jogadas subsequentes
-        naipe_lider = carta_lider[-1]
-        possui_naipe_lider = any(c.endswith(naipe_lider) for c in mao_jogador)
 
-        if possui_naipe_lider and not carta.endswith(naipe_lider):
-            print("Jogada inválida! Você deve jogar uma carta do mesmo naipe que a carta líder, se possível.")
+    # Verifica se pode seguir o naipe líder
+    if carta_lider and not carta.endswith(carta_lider[-1]):
+        if any(c.endswith(carta_lider[-1]) for c in mao_jogador):
+            print("Jogada inválida! Deve seguir o naipe, se possível.")
             return False
 
     return True
@@ -82,75 +80,90 @@ def iniciar_rodada (jogadores_cartas):
 #iniciar_rodada
 
 def jogar_rodadas(jogadores_cartas, primeiro_jogador, cartas_ganhas_por_jogador, pontos_por_jogador):
-    total_cartas = len(jogadores_cartas[0])  # Número de rodadas igual ao número de cartas por jogador
-
+    """
+    Joga todas as rodadas até que todos os jogadores fiquem sem cartas.
+    """
     copas_jogadas = False  # Flag para saber se Copas já foi jogado
 
-    for rodada in range(total_cartas):
-        cartas_jogadas = []  # Lista para armazenar as cartas jogadas na rodada
-        jogador_atual = primeiro_jogador
-        carta_lider = None  # Inicialmente não há carta líder
+    while any(len(mao) > 0 for mao in jogadores_cartas):  # Continua enquanto há cartas nas mãos dos jogadores
+        total_cartas = len(jogadores_cartas[0])  # Número de rodadas igual ao número de cartas por jogador
 
-        print(f"\n--- Rodada {rodada + 1} ---")
-        
-        for turno in range(len(jogadores_cartas)):  # Cada jogador joga uma vez por rodada
-            mao_jogador = jogadores_cartas[jogador_atual]  # Mão do jogador atual
-            print(f"\nJogador {jogador_atual + 1}, suas cartas: {mao_jogador}")
+        for rodada in range(total_cartas):
+            if all(len(mao) == 0 for mao in jogadores_cartas):  # Se todos os baralhos estiverem vazios, finaliza
+                finalizar_jogo(pontos_por_jogador)
+                return
+            
+            cartas_jogadas = []  # Lista para armazenar as cartas jogadas na rodada
+            jogador_atual = primeiro_jogador
+            carta_lider = None  # Inicialmente não há carta líder
 
-            if rodada == 0 and turno == 0 and '2♣' in mao_jogador:
-                # Primeira jogada obrigatória com 2♣
-                carta_jogada = '2♣'
-                print(f"Jogador {jogador_atual + 1} jogou: {carta_jogada}")
-                jogadores_cartas[jogador_atual].remove(carta_jogada)
-                cartas_jogadas.append(carta_jogada)
-                carta_lider = carta_jogada
-            else:
-                # Jogador escolhe a carta
-                while True:
-                    carta_jogada = input(f"Jogador {jogador_atual + 1}, escolha uma carta para jogar: ").strip()
-                    
-                    if carta_jogada not in mao_jogador:
-                        print("Carta inválida! Escolha uma carta que esteja na sua mão.")
-                        continue
-                    
-                    if not validar_jogada(carta_jogada, mao_jogador, carta_lider, rodada):
-                        continue
-                    
-                    # Se a carta for válida, remove-a e avança
+            print(f"\n--- Rodada {rodada + 1} ---")
+            
+            for turno in range(len(jogadores_cartas)):  # Cada jogador joga uma vez por rodada
+                mao_jogador = jogadores_cartas[jogador_atual]  # Mão do jogador atual
+                if not mao_jogador:  # Se o jogador não tiver cartas, pula para o próximo
+                    jogador_atual = (jogador_atual + 1) % len(jogadores_cartas)
+                    continue
+
+                print(f"\nJogador {jogador_atual + 1}, suas cartas: {mao_jogador}")
+
+                if rodada == 0 and turno == 0 and '2♣' in mao_jogador:
+                    # Primeira jogada obrigatória com 2♣
+                    carta_jogada = '2♣'
+                    print(f"Jogador {jogador_atual + 1} jogou: {carta_jogada}")
                     jogadores_cartas[jogador_atual].remove(carta_jogada)
                     cartas_jogadas.append(carta_jogada)
+                    carta_lider = carta_jogada
+                else:
+                    # Jogador escolhe a carta
+                    while True:
+                        carta_jogada = input(f"Jogador {jogador_atual + 1}, escolha uma carta para jogar: ").strip()
+                        
+                        if carta_jogada not in mao_jogador:
+                            print("Carta inválida! Escolha uma carta que esteja na sua mão.")
+                            continue
+                        
+                        if not validar_jogada(carta_jogada, mao_jogador, carta_lider, rodada, copas_jogadas):
+                            continue
+                        
+                        # Se a carta for válida, remove-a e avança
+                        jogadores_cartas[jogador_atual].remove(carta_jogada)
+                        cartas_jogadas.append(carta_jogada)
 
-                    # Define a carta líder se ainda não houver uma
-                    if not carta_lider:
-                        carta_lider = carta_jogada
-                    if carta_jogada[-1] == '♥':
-                        copas_jogadas = True  # Alguém jogou Copas, portanto, agora é válido seguir o naipe
+                        # Define a carta líder se ainda não houver uma
+                        if not carta_lider:
+                            carta_lider = carta_jogada
+                        if carta_jogada[-1] == '♥':
+                            copas_jogadas = True  # Alguém jogou Copas, portanto, agora é válido seguir o naipe
 
-                    break  # Sai do loop quando a carta é válida
-            
-            # Próximo jogador
-            jogador_atual = (jogador_atual + 1) % len(jogadores_cartas)
+                        break  # Sai do loop quando a carta é válida
+                
+                # Próximo jogador
+                jogador_atual = (jogador_atual + 1) % len(jogadores_cartas)
 
-        # Após todos jogarem, determinar o vencedor da rodada
-        vencedor = determinar_vencedor_rodada(cartas_jogadas, primeiro_jogador)
+            # Após todos jogarem, determinar o vencedor da rodada
+            vencedor = determinar_vencedor_rodada(cartas_jogadas, primeiro_jogador)
 
-        # Atualizar cartas ganhas e pontos
-        cartas_ganhas_por_jogador[vencedor].extend(cartas_jogadas)
+            # Atualizar cartas ganhas e pontos
+            cartas_ganhas_por_jogador[vencedor].extend(cartas_jogadas)
 
-        # Configurar o vencedor como o primeiro jogador da próxima rodada
-        primeiro_jogador = vencedor
+            # Configurar o vencedor como o primeiro jogador da próxima rodada
+            primeiro_jogador = vencedor
 
-        # Exibir o estado atual
-        print("\nEstado atual:")
-        for jogador in range(len(cartas_ganhas_por_jogador)):
-            # Filtrar cartas de copas (♥)
-            cartas_ganhas = cartas_ganhas_por_jogador[jogador]
-            cartas_copas = [carta for carta in cartas_ganhas if '♥' in carta or carta == 'Q♠']
+            # Exibir o estado atual
+            print("\nEstado atual:")
+            for jogador in range(len(cartas_ganhas_por_jogador)):
+                # Filtrar cartas de copas (♥)
+                cartas_ganhas = cartas_ganhas_por_jogador[jogador]
+                cartas_copas = [carta for carta in cartas_ganhas if '♥' in carta or carta == 'Q♠']
 
-            # Usar calcular_pontos para obter a pontuação correta
-            pontos_atual = calcular_pontos(cartas_ganhas)
+                # Usar calcular_pontos para obter a pontuação correta
+                pontos_atual = calcular_pontos(cartas_ganhas)
 
-            print(f"Jogador {jogador + 1}: Cartas ganhas: {cartas_ganhas}, {cartas_copas} = {pontos_atual} pontos")
+                print(f"Jogador {jogador + 1}: Cartas ganhas: {cartas_ganhas}, {cartas_copas} = {pontos_atual} pontos")
+
+    # Finalizar o jogo quando todas as cartas forem jogadas
+    finalizar_jogo(pontos_por_jogador)
 #jogar_rodadas
 
 
@@ -221,3 +234,19 @@ def finalizar_rodada(cartas_jogadas, primeiro_jogador, cartas_ganhas_por_jogador
     }
 
     return vencedor, cartas_ganhas_por_jogador, pontos_por_jogador
+
+# =========================================================
+#                   Finalizar Jogo
+# =========================================================
+
+def finalizar_jogo(pontos_por_jogador):
+    vencedor = min(pontos_por_jogador, key=pontos_por_jogador.get)  # Jogador com menos pontos
+    menor_pontuacao = pontos_por_jogador[vencedor]
+
+    print("\n=== Fim do Jogo ===")
+    print("Pontuações Finais:")
+    for jogador, pontos in pontos_por_jogador.items():
+        print(f"Jogador {jogador + 1}: {pontos} pontos")
+    
+    print(f"\nVencedor: Jogador {vencedor + 1} com {menor_pontuacao} pontos!")
+    return vencedor
